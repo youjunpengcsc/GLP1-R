@@ -1,0 +1,75 @@
+rm(list = ls())
+gc()
+setwd("D:/Lab/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/5.Annotation/1.QC")
+
+sce <- readRDS("D:/Lab/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/4.Recluster/1.Re_Clustering/Delet_Recluster.rds")
+unique(names(sce@meta.data))
+
+table(sce$RNA_snn_res.0.5)
+sce$seurat_clusters <- sce$RNA_snn_res.0.5
+Idents(sce) <- sce$seurat_clusters
+levels(sce)
+
+#### 1.Basic Information ####
+pdf('1.Umap.pdf')
+DimPlot(sce, label = T)
+dev.off()
+
+pdf('2.nCount_RNA_Distribution.pdf')
+FeaturePlot(sce, features = 'nCount_RNA', label = T)
+dev.off()
+
+pdf('3.nCount_RNA_Vlnplot.pdf', width = 15, height = 5.5)
+VlnPlot(sce, features = 'nCount_RNA')
+dev.off()
+
+pdf('4.nFeature_RNA_Distribution.pdf')
+FeaturePlot(sce, features = 'nFeature_RNA', label = T)
+dev.off()
+
+pdf('5.nFeature_RNA_Vlnplot.pdf', width = 15, height = 5.5)
+VlnPlot(sce, features = 'nFeature_RNA')
+dev.off()
+
+pdf('6.Podocyte.pdf')
+VlnPlot(sce, features = 'Nphs1')
+dev.off()
+
+#### 2.Every Clusters ####
+table(sce$seurat_clusters)
+#0     1     2    3    4    5    6    7    8    9   10   11   12   13   14   15   16   17   18   19   20   21   22   23   24    25   26   27 
+#2897 2750 2242 1332 1312  828  710  704  699  692  568  557  522  432  316  297  279  234  231  222  179  148  148  135  101   89   57   22 
+levels(sce)
+
+
+sce_filter <- subset(sce, idents = unique(Idents(sce))[!unique(Idents(sce)) %in% c('16', '21', '22', #High Possibility to be Doublets
+                                                                                   
+                                                                                   '17','19', '20', '24', '26', '27' #Unwanted Group
+                                                                                   )])
+
+table(sce_filter$seurat_clusters)
+#### 3. Result ####
+sce_filter$seurat_clusters <- droplevels(sce_filter$seurat_clusters)
+
+pdf('7.After_QC2_UMAP.PDF', width = 8, height = 6)
+DimPlot(sce_filter, label = T)
+dev.off()
+
+pdf('8.After_Drop_nCount_RNA_Distribution.pdf')
+FeaturePlot(sce_filter, features = 'nCount_RNA', label = T)
+dev.off()
+
+pdf('9.After_Drop_nCount_RNA_Vlnplot.pdf', width = 12, height = 5.5)
+VlnPlot(sce_filter, features = 'nCount_RNA')
+dev.off()
+
+pdf('10.After_Drop_nFeature_RNA_Distribution.pdf')
+FeaturePlot(sce_filter, features = 'nFeature_RNA', label = T)
+dev.off()
+
+pdf('11.After_Drop_nFeature_RNA_Vlnplot.pdf', width = 12, height = 5.5)
+VlnPlot(sce_filter, features = 'nFeature_RNA')
+dev.off()
+
+#Save Filtered File
+saveRDS(sce_filter, 'After_QC2_R.0.5.RDS')

@@ -1,0 +1,47 @@
+library(Seurat)
+library(tidyverse)
+library(ggplot2)
+library(patchwork)
+#清除环境变量
+rm(list = ls())
+gc()
+
+sample3.data <- Read10X(data.dir = "D:/Lab/2.2.Version2.Second_Chance/1.RAW_feature_bc_matrix/K_Y_0/K_Y_0.raw_feature_bc_matrix")
+sce <- CreateSeuratObject(counts = sample3.data, project = "K_Y_0", min.cells = 3, min.features = 200)
+ncol(sce)
+ncol(sample3.data)
+
+#标记上线粒体，核糖体及血红蛋白比例
+sce [["percent.mt"]] <- PercentageFeatureSet(sce , pattern = "^mt-")
+sce <- PercentageFeatureSet(sce, "^Rp[sl]", col.name = "percent.ribo")
+sce <- PercentageFeatureSet(sce, "^Hb[^(p)]", col.name = "percent.hb")
+head(sce@meta.data)
+
+#可视化出来
+pdf('Vlnplot_nFeature_nCount_percent.mt.pdf',width = 10, height = 8)
+VlnPlot(sce, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+dev.off()
+
+plot1 <- FeatureScatter(sce, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(sce, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+if(!require(patchwork))install.packages("patchwork")
+pdf('Relationship_nCount_percent.mt_nFeature.pdf',width = 10,height = 8)
+CombinePlots(plots = list(plot1, plot2))
+dev.off()
+rm(plot1, plot2)
+
+#按比例选定筛选条件
+gene.freq <- do.call("cbind", tapply(sce@meta.data$nFeature_RNA,sce@meta.data$orig.ident,quantile,probs=seq(0,1,0.05)))
+rna.freq <- do.call("cbind", tapply(sce@meta.data$nCount_RNA,sce@meta.data$orig.ident,quantile,probs=seq(0,1,0.05)))
+mt.freq <- do.call("cbind", tapply(sce@meta.data$percent.mt,sce@meta.data$orig.ident,quantile,probs=seq(0,1,0.05)))
+ribo.freq <- do.call("cbind", tapply(sce@meta.data$percent.ribo,sce@meta.data$orig.ident,quantile,probs=seq(0,1,0.05)))
+hb.freq <- do.call("cbind", tapply(sce@meta.data$percent.hb,sce@meta.data$orig.ident,quantile,probs=seq(0,1,0.05)))
+freq.combine <- as.data.frame(cbind(gene.freq,rna.freq,mt.freq,ribo.freq,hb.freq))
+
+colnames(freq.combine) <- c('Features', 'Counts', 'Mt', 'Rp', 'Hb')
+write.csv(freq.combine, 'Filter_percentage.csv', row.names = F)
+
+sce_filter <- subset(sce, subset = nFeature_RNA > 500 & nFeature_RNA < 5000 & percent.mt < 1.53)
+ncol(sce_filter)
+
+saveRDS(sce_filter, 'K_Y_0.Filter.RDS')

@@ -1,0 +1,107 @@
+library(AUCell)
+library(clusterProfiler)
+library(Seurat)
+library(ggplot2)
+rm(list = ls())
+gc()
+
+#### 0.Preparation ####
+#Load Data
+sce <- readRDS('D:/Lab/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/2.Merge_Harmony_Cluster/2.Harmony/Harmony_Cluster.RDS')
+markers <- read.csv('D:/Lab/ReferenceDatabase/PanglaoDB/PanglaoDB_markers_27_Mar_2020.tsv', sep = '\t')
+
+markers_select <- markers[markers$cell.type == 'Proximal tubule cells' & markers$species != 'Hs',]
+genes <- markers_select$official.gene.symbol
+
+#Mousify the gene symbol
+mousify <- function(a){
+  return(paste0(substr(a,1,1), tolower(substr(a,2,nchar(a)))))
+}
+genes <- sapply(genes, mousify)
+
+#### 1.AUCell ####
+counts <- GetAssayData(object = sce, layer  = 'counts')
+cell_rankings <- AUCell_buildRankings(counts)
+
+rm(counts)
+gc()
+
+cells_AUC <- AUCell_calcAUC(genes, cell_rankings)
+
+pdf('1.AUCell_Thresholds.pdf')
+cells_assignment <- AUCell_exploreThresholds(cells_AUC, plotHist = T, assign = T)
+dev.off()
+
+#cells_assignment$geneSet$assignment
+pdf('2.new_Threshold.pdf')
+AUCell_plotHist(cells_AUC, aucThr=0.1)
+abline(v=0.1)
+dev.off()
+
+#宽松标准
+new_cells <- names(which(getAUC(cells_AUC)['geneSet',]>0.1))
+length(new_cells)
+
+sce$is_Proximal <- ifelse(colnames(sce) %in% new_cells, 'Yes', 'No')
+pdf('3.is_celltype.pdf',width = 10, height = 4.5)
+DimPlot(object = sce, group.by = 'is_Proximal', label = T) + NoLegend() | DimPlot(object = sce, group.by = 'seurat_clusters', label = T) + NoLegend()
+dev.off()
+
+#严格标准
+new_cells <- names(which(getAUC(cells_AUC)['geneSet',]>0.19))
+length(new_cells)
+
+sce$is_Proximal2 <- ifelse(colnames(sce) %in% new_cells, 'Yes', 'No')
+pdf('4.is_celltype2.pdf',width = 10, height = 4.5)
+DimPlot(object = sce, group.by = 'is_Proximal2', label = T) + NoLegend() | DimPlot(object = sce, group.by = 'seurat_clusters', label = T) + NoLegend()
+dev.off()
+
+pdf('5.Proximal_Contrast.pdf',width = 10, height = 4.5)
+DimPlot(object = sce, group.by = 'is_Proximal', label = T) + NoLegend() | DimPlot(object = sce, group.by = 'is_Proximal2', label = T) + NoLegend()
+dev.off()
+
+
+table(sce@meta.data$is_Proximal2 == "Yes")
+table(sce@meta.data$is_Proximal == "Yes")
+
+sce$Damage <- ifelse(sce@meta.data$is_Proximal2 == "No" & sce@meta.data$is_Proximal == "Yes", 'Damage', 'Normal')
+
+
+p1 <- DimPlot(sce, group.by = 'Damage', label = T) + NoLegend()
+p2 <- DimPlot(sce, group.by = 'seurat_clusters', label = T) + NoLegend()
+
+pdf('6.Damage_Clusters.pdf', width = 10, height = 5)
+p1 | p2
+dev.off()
+rm(p1,p2)
+
+#### 2.Filter #####
+table(sce$orig.ident)
+table(sce$Damage)
+Idents(sce) <- sce$Damage
+
+pdf('1.QC_Contrast.pdf', width = 12, height = 4.5)
+VlnPlot(sce, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+dev.off()
+
+Idents(sce) <- sce$RNA_snn_res.0.3
+pdf('2.QC_Contrast_clusters.pdf', width = 12, height = 9)
+VlnPlot(sce, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 1)
+dev.off()
+
+Idents(sce) <- sce$RNA_snn_res.0.3
+sce_filter <- subset(sce, idents = '1', invert = T)
+
+ncol(sce)
+ncol(sce_filter)
+
+table(sce$orig.ident)
+table(sce_filter$orig.ident)
+
+saveRDS(sce, 'Before_Filter.RDS')
+
+sce_filter@meta.data$is_Proximal <- NULL
+sce_filter@meta.data$is_Proximal2 <- NULL
+sce_filter@meta.data$Damage <- NULL
+
+saveRDS(sce_filter, 'After_Filter.RDS')

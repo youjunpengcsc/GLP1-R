@@ -1,0 +1,56 @@
+library(Seurat)
+library(dplyr)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+rm(list = ls())
+gc()
+
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/8.Enrichment/2.3.GSEA")
+All_celltypes <- readRDS("../../7.3.DEGs/All_celltypes.RDS")
+geneset1 = read.gmt("./m5.go.bp.v2023.2.Mm.symbols.gmt")
+geneset2 = read.gmt("./m2.cp.wikipathways.v2023.2.Mm.symbols.gmt")
+
+for (selected_celltype in All_celltypes) {
+  DEGs <- readRDS(paste0(paste0("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/7.3.DEGs/", selected_celltype),"/DEGs_KYL_KY0.RDS"))
+  gene_df <- DEGs
+  geneList <- gene_df$avg_log2FC
+  names(geneList) =  rownames(gene_df)
+  geneList = sort(geneList, decreasing = TRUE)
+  head(geneList)
+  
+  gsea_res <- GSEA(geneList,TERM2GENE = geneset1, pvalueCutoff = 1)
+  GSEA_result <- as.data.frame(gsea_res)
+  GSEA_result_DOWN <- GSEA_result %>% subset(GSEA_result$enrichmentScore < 0)
+  GSEA_result_UP <- GSEA_result %>% subset(GSEA_result$enrichmentScore > 0)
+  
+  GSEA_result_DOWN <- GSEA_result_DOWN[order(GSEA_result_DOWN$pvalue),]
+  GSEA_result_UP <- GSEA_result_UP[order(GSEA_result_UP$pvalue),]
+  
+  dir.create(paste0("./",selected_celltype))
+  saveRDS(gsea_res, paste0(paste0("./",selected_celltype), 
+                 paste0("/",paste0(selected_celltype, "_GSEA_GOBP.rds"))))
+  write.csv(GSEA_result, paste0(paste0("./",selected_celltype), 
+                     paste0("/",paste0(selected_celltype, "_GSEA_GOBP.csv"))))
+  write.csv(GSEA_result_DOWN, paste0(paste0("./",selected_celltype), 
+                                paste0("/",paste0(selected_celltype, "_GSEA_GOBP_down.csv"))))
+  write.csv(GSEA_result_UP, paste0(paste0("./",selected_celltype), 
+                                paste0("/",paste0(selected_celltype, "_GSEA_GOBP_up.csv"))))
+  
+  gsea_res2 <- GSEA(geneList,TERM2GENE = geneset2, pvalueCutoff = 1)
+  GSEA_result2 <- as.data.frame(gsea_res2)
+  GSEA_result_DOWN2 <- GSEA_result2 %>% subset(GSEA_result2$enrichmentScore < 0)
+  GSEA_result_UP2 <- GSEA_result2 %>% subset(GSEA_result2$enrichmentScore > 0)
+  
+  GSEA_result_DOWN2 <- GSEA_result_DOWN2[order(GSEA_result_DOWN2$pvalue),]
+  GSEA_result_UP2 <- GSEA_result_UP2[order(GSEA_result_UP2$pvalue),]
+  
+  saveRDS(gsea_res2, paste0(paste0("./",selected_celltype), 
+                           paste0("/",paste0(selected_celltype, "_GSEA_wiki.rds"))))
+  write.csv(GSEA_result2, paste0(paste0("./",selected_celltype), 
+                                paste0("/",paste0(selected_celltype, "_GSEA_wiki.csv"))))
+  write.csv(GSEA_result_DOWN2, paste0(paste0("./",selected_celltype), 
+                                     paste0("/",paste0(selected_celltype, "_GSEA_wiki_down.csv"))))
+  write.csv(GSEA_result_UP2, paste0(paste0("./",selected_celltype), 
+                                   paste0("/",paste0(selected_celltype, "_GSEA_wiki_up.csv"))))
+  
+}

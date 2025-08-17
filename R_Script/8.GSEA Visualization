@@ -1,0 +1,63 @@
+library(clusterProfiler)
+library(enrichplot)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/8.Enrichment/2.3.GSEA/Selected_Visualization")
+
+selected_GSEA <- readxl::read_xlsx('./Proximal_GSEA.xlsx')
+selected_GSEA$Description <- gsub("^WP_", "", selected_GSEA$Description)
+selected_GSEA$Description <- gsub("_", " ", selected_GSEA$Description)
+selected_GSEA$Description <- tolower(selected_GSEA$Description)
+selected_GSEA$Description <- sub("^([a-z])", "\\U\\1", selected_GSEA$Description, perl = TRUE)
+
+erich2plot_gsea <- function(data4plot){
+  library(ggplot2)
+  data4plot <- data4plot[order(data4plot$NES,decreasing = F),]
+  data4plot$Description <- factor(data4plot$Description, levels = data4plot$Description)
+  p <- ggplot(data4plot,aes(NES,Description))
+  p<-p + geom_point()
+  
+  pbubble <- p + geom_point(aes(size=abs(enrichmentScore),color=-log10(pvalue)))
+  
+  pr <- pbubble + scale_colour_gradient(low="#90EE90",high="red") + 
+    labs(color=expression(-log10(pvalue)),size="Abs of enrichmentScore", 
+         x="NES", y="term.description",title="WikiPathways terms")
+  
+  pr <- pr + theme_bw()
+  pr
+}
+
+erich2plot_gsea(selected_GSEA)
+
+pdf('Podocyte_GSEA.pdf', width = 8, height = 4)
+erich2plot_gsea(selected_GSEA)
+dev.off()
+
+pdf('Podocyte_GSEA2.pdf', width = 8, height = 8)
+erich2plot_gsea(selected_GSEA)
+dev.off()
+
+pdf('PT_GSEA.pdf', width = 12, height = 9)
+erich2plot_gsea(selected_GSEA)
+dev.off()
+
+pdf('PT_GSEA2.pdf', width = 12, height = 12)
+erich2plot_gsea(selected_GSEA)
+dev.off()
+
+pdf('PT_GSEA3.pdf', width = 12, height = 15)
+erich2plot_gsea(selected_GSEA)
+dev.off()
+
+pdf('PT_GSEA4.pdf', width = 12, height = 18)
+erich2plot_gsea(selected_GSEA)
+dev.off()
+
+pdf('Mesangial_GSEA.pdf', width = 8, height = 4.5)
+erich2plot_gsea(selected_GSEA)
+dev.off()
+
+pdf('Mesangial_GSEA2.pdf', width = 8, height = 9)
+erich2plot_gsea(selected_GSEA)
+dev.off()

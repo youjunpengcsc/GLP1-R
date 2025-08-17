@@ -1,0 +1,29 @@
+library(Seurat)
+library(dplyr)
+library(DESeq2)
+rm(list = ls())
+gc()
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/7.3.DEGs")
+
+seuratobj <- readRDS("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/6.Annotating/Annotated.RDS")
+png("1.1.Check data.png", width = 600, height = 600)
+DimPlot(seuratobj, group.by = "celltype", label = T) + NoLegend()
+dev.off()
+
+Idents(seuratobj) <- seuratobj$celltype
+
+All_celltypes <- levels(seuratobj)
+All_celltypes
+saveRDS(All_celltypes, "All_celltypes.RDS")
+
+for (selected_celltype in All_celltypes) {
+  dir.create(paste0("./", selected_celltype))
+  selected_cluster <- subset(seuratobj, idents = selected_celltype)
+  Idents(selected_cluster) <- selected_cluster$orig.ident
+  DEGs <- FindMarkers(selected_cluster, ident.1 = "K_Y_L", ident.2 = "K_Y_0", only.pos = FALSE, logfc.threshold = 0)
+  saveRDS(DEGs, paste0(paste0("./", selected_celltype), "/DEGs_KYL_KY0.RDS"))
+  DEGs_up <- DEGs %>%  dplyr::filter(avg_log2FC > 0)
+  DEGs_down <- DEGs %>%  dplyr::filter(avg_log2FC < 0)
+  write.csv(DEGs_up, paste0(paste0("./", selected_celltype), "/UP_KYL_KY0.CSV"))
+  write.csv(DEGs_down, paste0(paste0("./", selected_celltype), "/DOWN_KYL_KY0.CSV"))
+}

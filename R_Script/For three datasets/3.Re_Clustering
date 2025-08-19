@@ -1,0 +1,89 @@
+library(Seurat)
+library(SeuratObject)
+rm(list = ls())
+
+#Load Data
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.6.Kidney(L_20week_8week)/4.Recluster")
+Delet_cell <- readRDS('../3.QC_Filter/2.QC/After_Filter.RDS')
+table(Delet_cell$orig.ident)
+table(Delet_cell$seurat_clusters)
+
+meatadata <- Delet_cell@meta.data
+colnames(meatadata)
+meatadata <- meatadata[, c("orig.ident", "nCount_RNA", "nFeature_RNA", "percent.mt", "percent.ribo", "percent.hb")]
+
+Delet_cell@meta.data <- meatadata
+rm(meatadata)
+
+#Re_Clustering
+sce = Delet_cell
+
+sce <- NormalizeData(sce)
+sce <- FindVariableFeatures(sce, selection.method = "vst", nfeatures = 2000)
+
+top10 <- head(VariableFeatures(sce), 10)
+plot1 <- VariableFeaturePlot(sce)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+
+pdf('1.VariableFeatures_top10.pdf', width = 10, height = 6)
+plot1 + plot2
+dev.off()
+rm(top10, plot1, plot2)
+gc()
+
+sce <- ScaleData(sce, features = rownames(sce))
+sce <- RunPCA(sce, features = VariableFeatures(object = sce),reduction.name = "pca")
+
+pdf("2.ElbowPlot.pdf")
+ElbowPlot(sce, ndims = 50)
+dev.off()
+
+library(Rcpp)
+library(harmony)
+sce <- RunHarmony(sce,reduction = "pca",group.by.vars = "orig.ident",reduction.save = "harmony")
+
+unique(names(sce@reductions))
+sce <- RunUMAP(sce, reduction = "harmony", reduction.name = "NewUmap", dims = 1:30)
+
+
+p1 <- DimPlot(sce, reduction = "umap",group.by = "orig.ident")
+p2 <- DimPlot(sce, reduction = 'NewUmap', group.by = 'orig.ident')
+p1 + p2
+ggsave(filename = "3.Before_After_Recluster_compare.pdf", wi = 12, he = 3.6)
+rm(p1, p2)
+gc()
+dev.off()
+
+sce <- FindNeighbors(sce, reduction = "harmony", dims = 1:30)
+sce <- FindClusters(sce, resolution = seq(0.1,0.6,0.1))
+library(clustree)
+library(ggraph)
+library(ggplot2)
+
+pclustree <- clustree(sce)
+ggsave(filename = "4.clustree.pdf",plot = pclustree ,wi = 12, he = 12)
+rm(pclustree)
+gc()
+
+pdf('5.Select_Resolution.pdf', width = 12, height = 4)
+DimPlot(sce, reduction = 'NewUmap', group.by = 'RNA_snn_res.0.4', label = T) + NoLegend() | 
+  DimPlot(sce, reduction = 'NewUmap', group.by = 'RNA_snn_res.0.5', label = T) + NoLegend() |
+  DimPlot(sce, reduction = 'NewUmap', group.by = 'RNA_snn_res.0.6', label = T) + NoLegend()
+dev.off()
+
+sce@meta.data$seurat_clusters <- sce@meta.data$RNA_snn_res.0.5
+Idents(sce) <- "seurat_clusters"
+
+sce@reductions$umap <- sce@reductions$NewUmap
+sce@reductions$NewUmap <- NULL
+
+pdf('6.Re_Cluster.pdf')
+DimPlot(sce, reduction = "umap", label = T) +NoLegend()
+dev.off()
+
+pdf('7.SplitBy_Orig.ident.pdf', width = 12, height = 4)
+DimPlot(sce, reduction = "umap", split.by = "orig.ident", label = T, label.size = 3) + NoLegend()
+dev.off()
+
+sce@assays$RNA$scale.data <- NULL
+saveRDS(sce, file = 'Delet_Recluster.rds')

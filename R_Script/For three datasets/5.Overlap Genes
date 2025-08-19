@@ -1,0 +1,63 @@
+library(dplyr)
+library(tidyverse)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(scRNAtoolVis)
+rm(list = ls())
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.6.Kidney(L_20week_8week)/7.Overlap Genes")
+
+seuratobj <- readRDS('../6.Annotating/Annotated.RDS')
+table(seuratobj$orig.ident)
+table(seuratobj$celltype)
+
+seuratobj$orig.ident <- factor(seuratobj$orig.ident, levels = c('K_Y_8','K_Y_0','K_Y_L'))
+Idents(seuratobj) <- seuratobj$celltype
+sce <- subset(seuratobj, idents = 'PT')
+
+Idents(sce) <- sce$orig.ident
+
+SLE_up <- FindMarkers(sce, ident.1 = 'K_Y_0', ident.2 = 'K_Y_8')
+SLE_up <- SLE_up %>% dplyr::filter(p_val < 0.05) %>% dplyr::filter(avg_log2FC > 0.5) %>% rownames()
+L_down <- FindMarkers(sce, ident.1 = 'K_Y_L', ident.2 = 'K_Y_0')
+L_down <- L_down %>% dplyr::filter(p_val < 0.05) %>% dplyr::filter(avg_log2FC < -0.5) %>% rownames()
+SLE_up_L_down <- intersect(SLE_up, L_down)
+
+SLE_down <- FindMarkers(sce, ident.1 = 'K_Y_0', ident.2 = 'K_Y_8')
+SLE_down <- SLE_down %>% dplyr::filter(p_val < 0.05) %>% dplyr::filter(avg_log2FC < -0.5) %>% rownames()
+L_up <- FindMarkers(sce, ident.1 = 'K_Y_L', ident.2 = 'K_Y_0')
+L_up <- L_up %>% dplyr::filter(p_val < 0.05) %>% dplyr::filter(avg_log2FC > 0.5) %>% rownames()
+SLE_down_L_up <- intersect(SLE_down, L_up)
+
+overlap_genes <- c(SLE_up_L_down, SLE_down_L_up)
+# remove rownames
+Idents(sce) <- sce$orig.ident
+
+sce <- ScaleData(sce)
+DoHeatmap(sce, features = SLE_up_L_down) + NoLegend()
+
+AverageHeatmap(object = sce,
+               markerGene = SLE_up_L_down,
+               showRowNames = F)
+AverageHeatmap(object = sce,
+               markerGene = SLE_down_L_up,
+               showRowNames = F)
+
+
+annoGene <- c("Wnk1","Shisa3","Nphp4",
+              "Hsp90ab1","Cebpb","Usp53",
+              "Bmp7","Ccn2","Calca",
+              "Ppp2r1a","Phka2","Calm2",
+              "Hif1a","Map3k5")
+
+pdf("Overlap DEGs of Proximal tubular cell.pdf", width = 6, height = 8)
+AverageHeatmap(object = sce,
+               markerGene = overlap_genes,
+               showRowNames = F,
+               cluster_rows= F,
+               gene.order = overlap_genes,
+               #markGenes = annoGene,
+               row_title = "Overlap DEGs",
+               slot = 'data',
+               clusterAnnoName = F)
+dev.off()
+

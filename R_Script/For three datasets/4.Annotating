@@ -1,0 +1,402 @@
+library(SeuratData)
+library(Seurat)
+library(ggplot2)
+library(scMayoMap)
+library(SCpubr)
+library(Nebulosa)
+rm(list = ls())
+gc()
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.6.Kidney(L_20week_8week)/5.Annotation/2.From_one_essay")
+
+#Load Data
+sce <- readRDS("../../4.Recluster/Delet_Recluster.rds")
+levels(sce)
+
+sce$seurat_clusters <- sce$RNA_snn_res.0.5 #Resolution 0.5
+Idents(sce) <- sce$seurat_clusters
+
+pdf('Umap.pdf', width = 8, height = 6)
+DimPlot(sce, group.by = 'seurat_clusters', label = T)
+dev.off()
+
+#### 1.Proximal tubule ####
+pdf('Proximal tubule_VlnPlot.pdf', width = 10 ,height = 3)
+VlnPlot(sce, features = c('Slc27a2'), ncol = 1)
+dev.off()
+
+pdf('Proximal tubule_NebulosaPlot.pdf', width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = 'Slc27a2')
+dev.off()
+
+pdf('Proximal tubule_Density_Plot.pdf', width = 10 ,height = 5)
+Nebulosa::plot_density(sce, features = 'Slc27a2') | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf('do_FeaturePlot.pdf', width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                            features = "Slc27a2")
+dev.off()
+
+#### 2.Endothelial ####
+pdf('Endothelial_VlnPlot.pdf', width = 10 ,height = 3)
+VlnPlot(sce, features = c('Emcn'), ncol = 1)
+dev.off()
+
+pdf('Endothelial_NebulosaPlot.pdf', width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = 'Emcn')
+dev.off()
+
+pdf('Endothelial_Density_Plot_Cluster.pdf', width = 10, height = 5)
+Nebulosa::plot_density(sce, features = 'Emcn') | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf('Glomerular_Endothelial_cell_VlnPlot.pdf', width = 10 ,height = 3)
+VlnPlot(sce, features = c('Ehd3'), ncol = 1)
+dev.off()
+
+pdf('Glomerular_Endothelial_cell_Density_Plot.pdf', width = 10 ,height = 5)
+Nebulosa::plot_density(sce, features = 'Ehd3') | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf('do_FeaturePlot.pdf', width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = "Emcn")
+dev.off()
+#### 3.Distal Tubule ####
+Celltype = 'Distal Tubule'
+Markers = 'Slc12a3'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+#### 4.Podocyte ####
+Celltype = 'Podocyte'
+Markers = 'Nphs1'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+
+#### 5.Loop of Henle ####
+Celltype = 'Loop of Henle'
+Markers = 'Slc12a1'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+
+#### 6.Macrophage ####
+Celltype = 'Macrophage'
+Markers = 'Cd68'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+#### 7.Collecting duct(intercalated) ####
+Celltype = 'intercalated'
+Markers = 'Atp6v0d2'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+
+#### 8.Collecting duct(Principal) ####
+Celltype = 'Principal'
+Markers = 'Hsd11b2'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+
+
+#### 9.B cells ####
+Celltype = 'B cells'
+Markers = 'Cd79a'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+
+#### 10.T cells ####
+Celltype = 'NK cells'
+Markers = 'Gzma'
+#Cd3g, Gzma
+
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+#### 11.Mesangial ####
+Celltype = 'Mesangial'
+Markers = 'Myl9'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+pdf(paste0(Celltype, '_FeaturePlot.pdf'), width = 5.5, height = 6)
+SCpubr::do_FeaturePlot(sample = sce,
+                       features = Markers)
+dev.off()
+#### 12.Neutrophil ####
+Celltype = 'Neutrophil'
+Markers = 'S100a8'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T) + NoLegend()
+dev.off()
+
+#### 13.Juxtaglomerular ####
+Celltype = 'Juxtaglomerular'
+Markers = 'Ren1'
+
+pdf(paste0(Celltype, '_VlnPlot.pdf'), width = 10 ,height = 3)
+VlnPlot(sce, features = Markers, ncol = 1)
+dev.off()
+
+pdf(paste0(Celltype,'_NebulosaPlot.pdf' ), width = 5, height = 5.5)
+SCpubr::do_NebulosaPlot(sce, features = Markers)
+dev.off()
+
+pdf(paste0(Celltype,'_Density_Plot_Cluster.pdf' ), width = 10, height = 5)
+Nebulosa::plot_density(sce, features = Markers) | DimPlot(sce, label = T, group.by = 'RNA_snn_res.0.5') + NoLegend()
+dev.off()
+
+library(Seurat)
+library(tidyverse)
+library(tibble)
+rm(list = ls())
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.6.Kidney(L_20week_8week)/6.Annotating")
+
+#Load Data
+sce <- readRDS("../4.Recluster/Delet_Recluster.rds")
+
+#Check Data
+pdf('1.Check_Data.pdf')
+DimPlot(sce, label = T)
+dev.off()
+
+table(sce$seurat_clusters)
+table(sce$orig.ident)
+#K_Y_0 K_Y_8 K_Y_L 
+#8728  5866  9273 
+
+levels(sce)
+
+#Rename SeuratObject
+sce <- RenameIdents(sce,
+                    "0"="PT",
+                    "1"="PT", 
+                    "2"="PT", 
+                    "3"= "PT", 
+                    "14"= "PT",
+                    "20"= "PT", 
+                    "4"= "Endo",
+                    "5"= "LOH",
+                    "9"= "LOH",
+                    "13"= "LOH",
+                    "8"= "PC",
+                    "11"= "PC", 
+                    "7"= "DT",
+                    "6"= "Mes",
+                    "23"= "Mes",
+                    "12"= "Macro",
+                    '21'= 'IC',
+                    '17'= 'IC',
+                    '10'= 'NKT',
+                    '16'= 'B',
+                    '25'= 'Podo')
+
+
+sce$celltype <- "no"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('0','1','2','3','14','20'))] <- "PT"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('4'))] <- "Endo"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('5','9','13'))] <- "LOH"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('8','11'))] <- "PC"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('7'))] <- "DT"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c("23",'6'))] <- "Mes"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('12'))] <- "Macro"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('21','17'))] <- "IC"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('10'))] <- "NKT"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('16'))] <- "B"
+sce$celltype[which(sce$RNA_snn_res.0.5 %in% c('25'))] <- "Podo"
+
+table(sce$celltype)
+Idents(sce) <- sce$celltype
+sce <- subset(sce, idents = 'no', invert = T)
+levels(sce)
+
+sce$celltype <- droplevels(sce$celltype)
+
+#Create a new column in Metadata
+sce$celltype <- factor(sce$celltype, levels = c('PT', 'LOH', 'DT', 'PC', 'IC',
+                                                              'Endo', 'Mes', 'Podo',
+                                                              'Macro', 'B', 'NKT'))
+Idents(sce) <- sce$celltype
+levels(sce)
+
+pdf('2.Precise.celltype_UMAP.pdf')
+DimPlot(sce, label = T, label.size = 3) + NoLegend()
+dev.off()
+
+pdf('3.Precise.celltype_UMAP_split.pdf', width = 18, height = 6)
+DimPlot(sce, label = T, label.size = 3, split.by = 'orig.ident') + NoLegend()
+dev.off()
+
+##### 1.Percentage #####
+names(unique(sce@meta.data))
+
+data <- as.data.frame(table(sce$orig.ident,sce$celltype))
+colnames(data) <- c("group","CellType","Freq")
+library(dplyr)
+df <- data %>% 
+  group_by(group) %>% 
+  mutate(Total = sum(Freq)) %>% 
+  ungroup() %>% 
+  mutate(Percent = Freq/Total)
+
+df$CellType  <- factor(df$CellType,levels = unique(df$CellType))
+
+write.csv(df,file = "celltype_percent.csv",row.names = F,quote = F)
+
+p <- ggplot(df, aes(x = group, y = Percent, fill = CellType)) +
+  geom_bar(position = "fill", stat="identity", color = 'white', alpha = 1, width = 0.95) +
+  #scale_fill_manual(values = mycol) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme_classic()
+pdf('Celltype_percentage.pdf', width = 5, height = 5.5)
+p
+dev.off()
+
+# 换种形式
+# facet_wrap 可以设置行列参数
+pdf('Celltype_percentage2.pdf', width = 8, height = 5.5)
+ggplot(df,aes(x = group, y = Percent,fill=group))+
+  geom_bar(stat="identity")+
+  facet_wrap(~ CellType, nrow = 2)+
+  theme_bw()+
+  NoLegend() + theme(axis.text.x = element_text(size = 6))
+dev.off()
+
+saveRDS(sce, 'Annotated.RDS')
+

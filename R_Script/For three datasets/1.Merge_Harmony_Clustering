@@ -1,0 +1,84 @@
+library(Seurat)
+library(tidyverse)
+library(ggplot2)
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.6.Kidney(L_20week_8week)/2.Merge_Harmony_Cluster")
+rm(list = ls())
+
+#Load Data
+K_Y_L <- readRDS("../../1.5.Kidney(KYL_KY0)/1.FilterData/3.K_Y_L/K_Y_L.Filter.RDS")
+K_Y_0 <- readRDS("../../1.5.Kidney(KYL_KY0)/1.FilterData/1.K_Y_0/K_Y_0.Filter.RDS")
+K_Y_8 <- readRDS("../../1.5.Kidney(KYL_KY0)/1.FilterData/2.K_Y_8/K_Y_8.Filter.RDS")
+
+
+##### 1.Merge ####
+all.cell <- merge(K_Y_L, y = c(K_Y_0, K_Y_8), add.cell.ids = c("KYL", "KY0","KY8"), 
+                  project = "L_Kideny") #For kidney
+head(all.cell)
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.6.Kidney(L_20week_8week)/2.Merge_Harmony_Cluster/1.Merge")
+saveRDS(all.cell,'Merge.rds')
+
+#### 2.Harmony ###
+setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.6.Kidney(L_20week_8week)/2.Merge_Harmony_Cluster/2.Harmony")
+sce = all.cell
+
+sce <- NormalizeData(sce)
+sce <- FindVariableFeatures(sce, selection.method = "vst", nfeatures = 2000)
+
+top10 <- head(VariableFeatures(sce), 10)
+plot1 <- VariableFeaturePlot(sce)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+pdf('1.VariableFeatures_top10.pdf', width = 10, height = 6)
+plot1 + plot2
+dev.off()
+rm(top10, plot1, plot2)
+gc()
+
+sce <- ScaleData(sce, features = rownames(sce))
+sce <- RunPCA(sce, features = VariableFeatures(object = sce),reduction.name = "pca")
+
+pdf('2.ElbowPlot.pdf')
+ElbowPlot(sce, ndims = 50)
+dev.off()
+
+sce <- RunUMAP(sce,reduction = "pca", dims = 1:20, reduction.name = "naive") #Use the dims from ElbowPlot for kidney
+
+library(Rcpp)
+library(harmony)
+
+sce <- RunHarmony(sce,reduction = "pca",group.by.vars = "orig.ident",reduction.save = "harmony")
+sce <- RunUMAP(sce, reduction = "harmony", dims = 1:20, reduction.name = "umap")
+
+unique(names(sce@reductions))
+p1 <- DimPlot(sce, reduction = "naive",group.by = "orig.ident")
+p2 <- DimPlot(sce, reduction = "umap",group.by = "orig.ident")
+p <- p1+p2
+ggsave(filename = "3.Before_After_Harmony_Compare.pdf", wi = 12, he = 3.6)
+rm(p1, p2, p)
+gc()
+
+###### 3.FindCluster ######
+Raw.metadata <- sce@meta.data
+sce <- FindNeighbors(sce, reduction = "harmony", dims = 1:20)
+sce <- FindClusters(sce, resolution = seq(0.3, 0.6,0.1))
+
+library(clustree)
+library(ggraph)
+library(ggplot2)
+
+pclustree <- clustree(sce)
+ggsave(pclustree, filename = "4.Clustree.pdf", wi = 12, he = 12)
+rm(pclustree)
+gc()
+
+sce$seurat_clusters <- sce$RNA_snn_res.0.3
+Idents(sce) <- sce$seurat_clusters
+
+pdf('5.SplitBy_Orig.ident.pdf', width = 12, height = 4)
+DimPlot(sce, reduction = "umap", split.by = "orig.ident", label = T) + NoLegend()
+dev.off()
+
+sce@reductions$naive <- NULL
+sce@assays$RNA$scale.data <- NULL
+sce <- JoinLayers(sce)
+
+saveRDS(sce, 'Harmony_Cluster.RDS')

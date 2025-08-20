@@ -1,6 +1,5 @@
 rm(list = ls())
 gc()
-setwd("D:/Lab/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/5.Annotation/1.QC")
 
 sce <- readRDS("D:/Lab/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/4.Recluster/1.Re_Clustering/Delet_Recluster.rds")
 unique(names(sce@meta.data))

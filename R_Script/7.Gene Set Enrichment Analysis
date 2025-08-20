@@ -5,7 +5,6 @@ library(org.Mm.eg.db)
 rm(list = ls())
 gc()
 
-setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/8.Enrichment/2.3.GSEA")
 All_celltypes <- readRDS("../../7.3.DEGs/All_celltypes.RDS")
 geneset1 = read.gmt("./m5.go.bp.v2023.2.Mm.symbols.gmt")
 geneset2 = read.gmt("./m2.cp.wikipathways.v2023.2.Mm.symbols.gmt")

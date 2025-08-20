@@ -3,7 +3,6 @@ library(enrichplot)
 library(dplyr)
 library(ggplot2)
 library(readxl)
-setwd("D:/Lab/利拉鲁肽/old/2.1.L_Kidney/1.5.Kidney(KYL_KY0)/8.Enrichment/2.3.GSEA/Selected_Visualization")
 
 selected_GSEA <- readxl::read_xlsx('./Proximal_GSEA.xlsx')
 selected_GSEA$Description <- gsub("^WP_", "", selected_GSEA$Description)

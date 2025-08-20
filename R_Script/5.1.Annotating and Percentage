@@ -1,0 +1,97 @@
+library(Seurat)
+library(tidyverse)
+library(tibble)
+rm(list = ls())
+
+#Load Data
+sce <- readRDS("After_QC2_R.0.5.RDS")
+
+#Check Data
+pdf('1.Check_Data.pdf')
+DimPlot(sce, label = T)
+dev.off()
+
+table(sce$seurat_clusters)
+table(sce$orig.ident)
+#K_Y_0 K_Y_L 
+#8716  8597 
+
+levels(sce)
+
+#Rename SeuratObject
+sce <- RenameIdents(sce,
+                    "0"="PT",
+                    "1"="PT", 
+                    "2"="PT", 
+                    "3"= "PT", 
+                    "4"= "Endo", 
+                    "5"= "LOH",
+                    "6"= "PC", 
+                    "7"= "DT", 
+                    "8"= "Mes",
+                    "9"= "LOH", 
+                    '10' = 'LOH',
+                    "11"= "Macro",
+                    "12"= "PT",
+                    '13'= 'PC',
+                    '14'= 'IC',
+                    '15'= 'NKT',
+                    '18'= 'IC',
+                    '23'= 'B',
+                    '25'= 'Podo')
+head(Idents(sce))
+levels(sce)
+#Create a new column in Metadata
+Raw.metadata <- sce@meta.data
+
+sce@meta.data$celltype = Idents(sce)
+
+sce$celltype <- factor(sce$celltype, levels = c('PT', 'LOH', 'DT', 'PC', 'IC',
+                                                              'Endo', 'Mes', 'Podo',
+                                                              'Macro', 'B', 'NKT'))
+
+
+pdf('2.Precise.celltype_UMAP.pdf')
+DimPlot(sce, label = T, label.size = 3) + NoLegend()
+dev.off()
+
+pdf('3.Precise.celltype_UMAP_split.pdf', width = 12, height = 6)
+DimPlot(sce, label = T, label.size = 3, split.by = 'orig.ident') + NoLegend()
+dev.off()
+
+##### 1.Percentage #####
+names(unique(sce@meta.data))
+
+data <- as.data.frame(table(sce$orig.ident,sce$celltype))
+colnames(data) <- c("group","CellType","Freq")
+library(dplyr)
+df <- data %>% 
+  group_by(group) %>% 
+  mutate(Total = sum(Freq)) %>% 
+  ungroup() %>% 
+  mutate(Percent = Freq/Total)
+
+df$CellType  <- factor(df$CellType,levels = unique(df$CellType))
+
+write.csv(df,file = "celltype_percent.csv",row.names = F,quote = F)
+
+p <- ggplot(df, aes(x = group, y = Percent, fill = CellType)) +
+  geom_bar(position = "fill", stat="identity", color = 'white', alpha = 1, width = 0.95) +
+  #scale_fill_manual(values = mycol) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme_classic()
+pdf('Celltype_percentage.pdf', width = 5, height = 5.5)
+p
+dev.off()
+
+# 换种形式
+# facet_wrap 可以设置行列参数
+pdf('Celltype_percentage2.pdf', width = 8, height = 5.5)
+ggplot(df,aes(x = group, y = Percent,fill=group))+
+  geom_bar(stat="identity")+
+  facet_wrap(~ CellType, nrow = 2)+
+  theme_bw()+
+  NoLegend() + theme(axis.text.x = element_text(size = 6))
+dev.off()
+
+saveRDS(sce, 'Annotated.RDS')
